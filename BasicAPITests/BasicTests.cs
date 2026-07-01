@@ -65,5 +65,26 @@ namespace BasicAPITests
 
         }
 
+        [Fact]
+        public async Task PostAsync()
+        {
+            RestClient restClient = new RestClient(restClientOptions);
+            string? token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
+            RestRequest restRequest = new RestRequest("Product/Create");
+            restRequest.AddHeader("Authorization", $"Bearer {token}");
+            restRequest.AddJsonBody(new Product 
+            {
+                Name = "Cabinet",
+                Description = "PC Cabinet",
+                Price = 300,
+                ProductType = ProductType.PERIPHARALS
+            });
+            Product? product = await restClient.PostAsync<Product>(restRequest);
+                      
+            Assert.Equal("Cabinet", product?.Name);
+
+
+        }
+
     }
 }
