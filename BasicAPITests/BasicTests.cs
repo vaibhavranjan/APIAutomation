@@ -1,5 +1,6 @@
 using FluentAssertions;
 using GraphQLProductApp.Data;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Text.Json;
@@ -9,6 +10,7 @@ namespace BasicAPITests
     public class BasicTests
     {
         private RestClientOptions restClientOptions { get; }
+        string? token = String.Empty;
         public BasicTests( ) 
         {
             this.restClientOptions = new RestClientOptions
@@ -17,12 +19,13 @@ namespace BasicAPITests
                 RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
 
             };
+
+            this.token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
         }
         [Fact]
         public async Task GetAsyncTest()
         {                      
             RestClient restClient = new RestClient(restClientOptions);
-            string? token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
             RestRequest restRequest = new RestRequest("Product/GetProductById/1");
             restRequest.AddHeader("Authorization", $"Bearer {token}");
             restRequest.AddHeader("Accept", "application/json");
@@ -37,7 +40,6 @@ namespace BasicAPITests
         public async Task GetAsyncWithUrlSegment()
         {
             RestClient restClient = new RestClient(restClientOptions);
-            string? token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
             RestRequest restRequest = new RestRequest("Product/GetProductById/{id}");
             restRequest.AddHeader("Authorization", $"Bearer {token}");
             restRequest.AddUrlSegment("id", 2);
@@ -49,7 +51,6 @@ namespace BasicAPITests
         public async Task GetAsyncWithQueryParameter()
         {
             RestClient restClient = new RestClient(restClientOptions);
-            string? token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
             RestRequest restRequest = new RestRequest("Product/GetProductByIdAndName");
             restRequest.AddHeader("Authorization", $"Bearer {token}");
             restRequest.AddQueryParameter("id", 2);
@@ -69,7 +70,6 @@ namespace BasicAPITests
         public async Task PostAsync()
         {
             RestClient restClient = new RestClient(restClientOptions);
-            string? token = Environment.GetEnvironmentVariable("JWT_TOKEN_SECRET");
             RestRequest restRequest = new RestRequest("Product/Create");
             restRequest.AddHeader("Authorization", $"Bearer {token}");
             restRequest.AddJsonBody(new Product 
@@ -82,6 +82,20 @@ namespace BasicAPITests
             Product? product = await restClient.PostAsync<Product>(restRequest);
                       
             Assert.Equal("Cabinet", product?.Name);
+
+
+        }
+
+        [Fact]
+        public async Task PostAsyncFileUploadTest()
+        {
+            RestClient restClient = new RestClient(restClientOptions);
+            RestRequest restRequest = new RestRequest("Product");
+            restRequest.AddHeader("Authorization", $"Bearer {token}");
+            restRequest.AddFile("myFile", @"C:\Vaibhav_Work\APIAutomation\Data\google.jpg", "multipart/form-data");
+            
+            var response = await restClient.PostAsync(restRequest);
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
 
 
         }
